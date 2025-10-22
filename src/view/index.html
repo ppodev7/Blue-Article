@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Biblioteca Virtual ✨</title>
+
+  <!-- Fontes -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- CSS externo -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="preloader" aria-hidden="true">
+    <img src="https://cdn-icons-png.flaticon.com/512/29/29302.png" alt="Ícone de livro">
+    <div class="loader-dots"><div></div><div></div><div></div></div>
+  </div>
+
+  <header>
+    <h1><img src="https://cdn-icons-png.flaticon.com/512/29/29302.png" alt="Livro"> Biblioteca Virtual 📘</h1>
+    <nav>
+      <a id="homeBtn">Início</a>
+      <a id="addBookBtn">Adicionar</a>
+      <a id="searchBtn">Buscar</a>
+      <a id="loginBtn">Login</a>
+    </nav>
+  </header>
+
+  <div id="bookList"></div>
+
+  <footer>
+    © 2025 Biblioteca Virtual 📘 – “Conhecimento é a magia mais poderosa”
+    <div class="icons">
+      <a href="https://wa.me/5599999999999" target="_blank" rel="noopener">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="WhatsApp">
+      </a>
+      <a href="mailto:contato@gmail.com">
+        <img src="https://cdn-icons-png.flaticon.com/512/281/281769.png" alt="Email">
+      </a>
+    </div>
+  </footer>
+
+  <!-- Modais -->
+  <div id="homeModal" class="modal">
+    <div class="modal-box">
+      <h2>Bem-vindo! 👋</h2>
+      <p>Você está na Biblioteca Virtual 2.0 🚀</p>
+      <button class="close-btn">Fechar</button>
+    </div>
+  </div>
+<div id="addBookModal" class="modal">
+  <div class="modal-box add-book-box">
+    <h2>Adicionar Livro 📚</h2>
+    <div class="add-form">
+      <div class="inputs">
+        <input id="titleInput" type="text" placeholder="Título" />
+        <input id="authorInput" type="text" placeholder="Autor" />
+        <input id="courseInput" type="text" placeholder="Curso" />
+        <input id="yearInput" type="text" placeholder="Ano" />
+        <textarea id="descInput" maxlength="500" placeholder="Descrição (opcional, até 500 caracteres)"></textarea>
+        <label for="fileInput" class="file-label">📄 Escolher PDF</label>
+        <input id="fileInput" type="file" accept=".pdf" hidden />
+        <label for="coverInput" class="file-label">🖼️ Escolher Capa</label>
+        <input id="coverInput" type="file" accept="image/*" hidden />
+      </div>
+
+      <div class="cover-preview">
+        <img id="previewImage" 
+             src="file:///C:/Users/User/Downloads/capa-livro-frente-capa-dura-vermelho.jpg" 
+             alt="Prévia da capa">
+      </div>
+    </div>
+    <button id="saveBook">Salvar</button>
+    <button class="close-btn">Fechar</button>
+  </div>
+</div>
+
+
+  <div id="searchModal" class="modal">
+    <div class="modal-box">
+      <h2>Buscar Livro 🔍</h2>
+      <input id="searchInput" type="text" placeholder="Digite parte do título..." />
+      <button id="doSearch">Pesquisar</button>
+      <button class="close-btn">Fechar</button>
+    </div>
+  </div>
+
+  <div id="loginModal" class="modal">
+    <div class="modal-box">
+      <h2>Login 🔑</h2>
+      <input type="text" placeholder="Usuário">
+      <input type="password" placeholder="Senha">
+      <button>Entrar</button>
+      <button class="close-btn">Fechar</button>
+    </div>
+  </div>
+
+  <script src="javinha.js"></script>
+</body>
+</html>
