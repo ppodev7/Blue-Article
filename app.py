@@ -1,0 +1,234 @@
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+import os
+
+# Configuração da aplicação Flask
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'blue-article-secret-key-2024'
+
+# Configuração do banco de dados MySQL
+DB_HOST = "localhost"
+DB_USER = "root"
+DB_PASSWORD = ""
+DB_NAME = "blue_article"
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Importar modelos primeiro
+from src.model.models import db, User, Article, Category
+
+# Inicializar SQLAlchemy com a app
+db.init_app(app)
+
+# Importar controllers
+from src.controller.article_controller import ArticleController
+from src.controller.user_controller import UserController
+from src.controller.auth_controller import AuthController
+
+# Inicializar controllers
+article_controller = ArticleController()
+user_controller = UserController()
+auth_controller = AuthController()
+
+# Rotas principais
+@app.route('/')
+def index():
+    """Página inicial - lista de artigos"""
+    articles = article_controller.get_all_articles()
+    return render_template('index.html', articles=articles)
+
+@app.route('/article/<int:article_id>')
+def view_article(article_id):
+    """Visualizar artigo específico"""
+    article = article_controller.get_article_by_id(article_id)
+    if not article:
+        flash('Artigo não encontrado!', 'error')
+        return redirect(url_for('index'))
+    return render_template('article_detail.html', article=article)
+
+@app.route('/search')
+def search():
+    """Buscar artigos"""
+    query = request.args.get('q', '')
+    articles = article_controller.search_articles(query) if query else []
+    return render_template('search.html', articles=articles, query=query)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Página de login"""
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        
+        user = auth_controller.login(email, password)
+        if user:
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            flash('Login realizado com sucesso!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Email ou senha incorretos!', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """Página de registro"""
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        # Validações básicas
+        if not name or not email or not password:
+            flash('Todos os campos são obrigatórios!', 'error')
+            return render_template('register.html')
+        
+        if len(password) < 6:
+            flash('A senha deve ter pelo menos 6 caracteres!', 'error')
+            return render_template('register.html')
+        
+        # Tentar criar o usuário
+        user = auth_controller.register(name, email, password)
+        if user:
+            flash('Conta criada com sucesso! Faça login para continuar.', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash('Erro ao criar conta. Email já existe ou dados inválidos!', 'error')
+    
+    return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    """Logout do usuário"""
+    session.clear()
+    flash('Logout realizado com sucesso!', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/dashboard')
+def dashboard():
+    """Dashboard do usuário"""
+    if 'user_id' not in session:
+        flash('Você precisa fazer login para acessar o dashboard!', 'error')
+        return redirect(url_for('login'))
+    
+    user_articles = article_controller.get_user_articles(session['user_id'])
+    return render_template('dashboard.html', articles=user_articles)
+
+@app.route('/add_article', methods=['GET', 'POST'])
+def add_article():
+    """Adicionar novo artigo"""
+    if 'user_id' not in session:
+        flash('Você precisa fazer login para adicionar artigos!', 'error')
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        abstract = request.form['abstract']
+        content = request.form['content']
+        category_id = request.form['category_id']
+        keywords = request.form['keywords']
+        
+        if article_controller.create_article(
+            title=title,
+            abstract=abstract,
+            content=content,
+            category_id=category_id,
+            keywords=keywords,
+            user_id=session['user_id']
+        ):
+            flash('Artigo adicionado com sucesso!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Erro ao adicionar artigo!', 'error')
+    
+    categories = Category.query.all()
+    return render_template('add_article.html', categories=categories)
+
+@app.route('/edit_article/<int:article_id>', methods=['GET', 'POST'])
+def edit_article(article_id):
+    """Editar artigo"""
+    if 'user_id' not in session:
+        flash('Você precisa fazer login para editar artigos!', 'error')
+        return redirect(url_for('login'))
+    
+    article = article_controller.get_article_by_id(article_id)
+    if not article or article.user_id != session['user_id']:
+        flash('Artigo não encontrado ou você não tem permissão para editá-lo!', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        title = request.form['title']
+        abstract = request.form['abstract']
+        content = request.form['content']
+        category_id = request.form['category_id']
+        keywords = request.form['keywords']
+        
+        if article_controller.update_article(
+            article_id=article_id,
+            title=title,
+            abstract=abstract,
+            content=content,
+            category_id=category_id,
+            keywords=keywords
+        ):
+            flash('Artigo atualizado com sucesso!', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Erro ao atualizar artigo!', 'error')
+    
+    categories = Category.query.all()
+    return render_template('edit_article.html', article=article, categories=categories)
+
+@app.route('/delete_article/<int:article_id>')
+def delete_article(article_id):
+    """Deletar artigo"""
+    if 'user_id' not in session:
+        flash('Você precisa fazer login para deletar artigos!', 'error')
+        return redirect(url_for('login'))
+    
+    article = article_controller.get_article_by_id(article_id)
+    if not article or article.user_id != session['user_id']:
+        flash('Artigo não encontrado ou você não tem permissão para deletá-lo!', 'error')
+        return redirect(url_for('dashboard'))
+    
+    if article_controller.delete_article(article_id):
+        flash('Artigo deletado com sucesso!', 'success')
+    else:
+        flash('Erro ao deletar artigo!', 'error')
+    
+    return redirect(url_for('dashboard'))
+
+# Criar tabelas do banco de dados
+def create_tables():
+    """Criar tabelas do banco de dados"""
+    with app.app_context():
+        db.create_all()
+        
+        # Criar categorias padrão se não existirem
+        if Category.query.count() == 0:
+            default_categories = [
+                Category(name='Ciências Exatas'),
+                Category(name='Ciências Humanas'),
+                Category(name='Ciências Biológicas'),
+                Category(name='Engenharias'),
+                Category(name='Tecnologia da Informação'),
+                Category(name='Artes e Design'),
+                Category(name='Medicina'),
+                Category(name='Direito'),
+                Category(name='Administração'),
+                Category(name='Outros')
+            ]
+            
+            for category in default_categories:
+                db.session.add(category)
+            
+            db.session.commit()
+            print("Categorias padrão criadas com sucesso!")
+
+if __name__ == '__main__':
+    create_tables()  # Criar tabelas na primeira execução
+    app.run(debug=True, host='0.0.0.0', port=5000)
