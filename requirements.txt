@@ -29,7 +29,7 @@ gunicorn==21.2.0
 waitress==2.1.2
 
 # Para upload de arquivos (opcional)
-Flask-Upload
+Flask-uploads
 
 # Para validação de formulários (opcional)
 WTForms==3.0.1
