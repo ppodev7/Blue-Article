@@ -80,6 +80,8 @@
                         </label>
                         <input type="file" class="form-control" id="cover" name="cover" accept="image/*">
                         <div class="form-text">Use uma imagem representativa para o seu artigo.</div>
+                        <!-- Image Preview -->
+                        <img id="cover-preview" src="#" alt="Pré-visualização da capa" class="img-fluid rounded mt-3" style="display: none; max-height: 300px;"/>
                     </div>
 
                     <div class="d-flex justify-content-between">
@@ -108,6 +110,25 @@ document.getElementById('content').addEventListener('input', function() {
 document.getElementById('abstract').addEventListener('input', function() {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
+});
+
+// Cover image preview
+document.getElementById('cover').addEventListener('change', function(event) {
+    const preview = document.getElementById('cover-preview');
+    const file = event.target.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function() {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+    }
+
+    if (file) {
+        reader.readAsDataURL(file);
+    } else {
+        preview.src = '#';
+        preview.style.display = 'none';
+    }
 });
 </script>
 {% endblock %}

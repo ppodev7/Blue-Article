@@ -47,23 +47,21 @@ def add_article():
         pdf_file = request.files.get('file')
         cover_file = request.files.get('cover')
 
+        # Lógica de salvamento do PDF
         pdf_path = None
         if pdf_file and pdf_file.filename != '':
             filename = secure_filename(pdf_file.filename)
-            relative_pdf_path = os.path.join('pdfs', filename)
-            pdf_folder_abs = os.path.join(upload_folder, 'pdfs')
-            os.makedirs(pdf_folder_abs, exist_ok=True)
-            pdf_file.save(os.path.join(upload_folder, relative_pdf_path))
-            pdf_path = relative_pdf_path
+            pdf_path = os.path.join('pdfs', filename) # Caminho relativo
+            os.makedirs(os.path.join(upload_folder, 'pdfs'), exist_ok=True)
+            pdf_file.save(os.path.join(upload_folder, pdf_path))
 
+        # Lógica de salvamento da Imagem de Capa
         cover_path = None
         if cover_file and cover_file.filename != '':
             filename = secure_filename(cover_file.filename)
-            relative_cover_path = os.path.join('covers', filename)
-            cover_folder_abs = os.path.join(upload_folder, 'covers')
-            os.makedirs(cover_folder_abs, exist_ok=True)
-            cover_file.save(os.path.join(upload_folder, relative_cover_path))
-            cover_path = relative_cover_path
+            cover_path = os.path.join('covers', filename) # Caminho relativo
+            os.makedirs(os.path.join(upload_folder, 'covers'), exist_ok=True)
+            cover_file.save(os.path.join(upload_folder, cover_path))
         
         if article_controller.create_article(
             title=title, abstract=abstract, content=content, category_id=category_id,
@@ -88,6 +86,9 @@ def edit_article(article_id):
     if not article or (article.user_id != session['user_id'] and session.get('user_role') != 'admin'):
         flash('Artigo não encontrado ou você não tem permissão para editá-lo!', 'error')
         return redirect(url_for('dashboard'))
+
+    # Carrega as categorias para serem usadas no GET e no POST (em caso de erro)
+    categories = Category.query.all()
     
     app_config = request.environ.get('app.config', {})
     upload_folder = app_config.get('UPLOAD_FOLDER')
@@ -106,22 +107,18 @@ def edit_article(article_id):
             if article.file_path and os.path.exists(os.path.join(upload_folder, article.file_path)):
                 os.remove(os.path.join(upload_folder, article.file_path))
             filename = secure_filename(pdf_file.filename)
-            relative_pdf_path = os.path.join('pdfs', filename)
-            pdf_folder_abs = os.path.join(upload_folder, 'pdfs')
-            os.makedirs(pdf_folder_abs, exist_ok=True)
-            pdf_file.save(os.path.join(upload_folder, relative_pdf_path))
-            new_pdf_path = relative_pdf_path
+            new_pdf_path = os.path.join('pdfs', filename)
+            os.makedirs(os.path.join(upload_folder, 'pdfs'), exist_ok=True)
+            pdf_file.save(os.path.join(upload_folder, new_pdf_path))
         
         new_cover_path = article.cover_path
         if cover_file and cover_file.filename != '':
             if article.cover_path and os.path.exists(os.path.join(upload_folder, article.cover_path)):
                 os.remove(os.path.join(upload_folder, article.cover_path))
             filename = secure_filename(cover_file.filename)
-            relative_cover_path = os.path.join('covers', filename)
-            cover_folder_abs = os.path.join(upload_folder, 'covers')
-            os.makedirs(cover_folder_abs, exist_ok=True)
-            cover_file.save(os.path.join(upload_folder, relative_cover_path))
-            new_cover_path = relative_cover_path
+            new_cover_path = os.path.join('covers', filename)
+            os.makedirs(os.path.join(upload_folder, 'covers'), exist_ok=True)
+            cover_file.save(os.path.join(upload_folder, new_cover_path))
 
         if article_controller.update_article(
             article_id=article_id, title=title, abstract=abstract, content=content,
@@ -130,9 +127,8 @@ def edit_article(article_id):
             flash('Artigo atualizado com sucesso!', 'success')
             return redirect(url_for('dashboard'))
         else:
-            flash('Erro ao atualizar artigo!', 'error')
+            flash('Erro ao atualizar artigo!', 'error') # A página será renderizada novamente com os dados do artigo
     
-    categories = Category.query.all()
     return render_template('edit_article.html', article=article, categories=categories)
 
 @articles_bp.route('/delete_article/<int:article_id>')
