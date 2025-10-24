@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Início - Blue Article{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section bg-primary text-white rounded-3 p-5 mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <h1 class="display-4 fw-bold mb-3">
+                <i class="fas fa-graduation-cap me-3"></i>
+                Biblioteca Digital de TCCs e Artigos Acadêmicos
+            </h1>
+            <p class="lead mb-4">
+                Explore uma vasta coleção de trabalhos de conclusão de curso e artigos acadêmicos 
+                de diversas áreas do conhecimento.
+            </p>
+            <div class="d-flex gap-3">
+                <a href="{{ url_for('search') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-search me-2"></i>Buscar Artigos
+                </a>
+                {% if not session.user_id %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Cadastrar-se
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-4 text-center">
+            <i class="fas fa-book-reader" style="font-size: 8rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="search-section mb-5">
+    <div class="card shadow">
+        <div class="card-body p-4">
+            <h3 class="card-title text-center mb-4">
+                <i class="fas fa-search me-2"></i>Buscar Artigos
+            </h3>
+            <form action="{{ url_for('search') }}" method="GET">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control form-control-lg" 
+                               name="q" placeholder="Digite palavras-chave, título ou autor..." 
+                               value="{{ request.args.get('q', '') }}">
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-search me-2"></i>Buscar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-file-alt text-primary" style="font-size: 3rem;"></i>
+                <h4 class="card-title mt-3">{{ articles|length }}</h4>
+                <p class="card-text">Artigos Publicados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-users text-success" style="font-size: 3rem;"></i>
+                <h4 class="card-title mt-3">+100</h4>
+                <p class="card-text">Usuários Cadastrados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="fas fa-tags text-warning" style="font-size: 3rem;"></i>
+                <h4 class="card-title mt-3">10</h4>
+                <p class="card-text">Categorias</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Articles Section -->
+<div class="recent-articles">
+    <h2 class="mb-4">
+        <i class="fas fa-clock me-2"></i>Artigos Recentes
+    </h2>
+    
+    {% if articles %}
+        <div class="row">
+            {% for article in articles[:6] %}
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-primary">{{ article.category.name }}</span>
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                {{ article.created_at.strftime('%d/%m/%Y') }}
+                            </small>
+                        </div>
+                        
+                        <h5 class="card-title">
+                            <a href="{{ url_for('articles.view_article', article_id=article.id) }}" 
+                               class="text-decoration-none text-dark">
+                                {{ article.title }}
+                            </a>
+                        </h5>
+                        
+                        <p class="card-text text-muted">
+                            {{ article.abstract[:150] }}{% if article.abstract|length > 150 %}...{% endif %}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>
+                                {{ article.author.name }}
+                            </small>
+                            <div class="d-flex gap-2">
+                                <small class="text-muted">
+                                    <i class="fas fa-eye me-1"></i>
+                                    {{ article.views_count }}
+                                </small>
+                                {% if article.file_path %}
+                                <small class="text-muted">
+                                    <i class="fas fa-download me-1"></i>
+                                    {{ article.downloads_count }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <a href="{{ url_for('articles.view_article', article_id=article.id) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>Ver Artigo
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if articles|length > 6 %}
+        <div class="text-center mt-4">
+            <a href="{{ url_for('search') }}" class="btn btn-primary">
+                <i class="fas fa-list me-2"></i>Ver Todos os Artigos
+            </a>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book-open text-muted" style="font-size: 4rem;"></i>
+            <h4 class="text-muted mt-3">Nenhum artigo encontrado</h4>
+            <p class="text-muted">Seja o primeiro a publicar um artigo!</p>
+            {% if session.user_id %}
+            <a href="{{ url_for('articles.add_article') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Adicionar Artigo
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Cadastrar-se
+            </a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

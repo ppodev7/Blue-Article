@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} - Blue Article{% endblock %}
+
+{% block content %}
+<div class="row" data-article-id="{{ article.id }}"> {# Adicionado data-article-id para rastreamento de visualizações #}
+    <div class="col-lg-8">
+        <!-- Article Cover Image -->
+        {% if article.cover_path %}
+        <div class="card shadow mb-4">
+            <img src="{{ url_for('uploaded_file', filename=article.cover_path) }}" 
+                 class="card-img-top" 
+                 alt="Imagem de capa do artigo: {{ article.title }}"
+                 style="max-height: 400px; object-fit: cover;">
+        </div>
+        {% endif %}
+
+        <!-- Article Header -->
+        <div class="card shadow mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="badge bg-primary fs-6">{{ article.category.name }}</span>
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ article.created_at.strftime('%d/%m/%Y às %H:%M') }}
+                    </small>
+                </div>
+                
+                <h1 class="card-title mb-3">{{ article.title }}</h1>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-user text-muted me-2"></i>
+                        <span class="fw-bold">{{ article.author.name }}</span>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <small class="text-muted">
+                            <i class="fas fa-eye me-1"></i>
+                            {{ article.views_count }} visualizações
+                        </small>
+                        {% if article.file_path %}
+                        <small class="text-muted">
+                            <i class="fas fa-download me-1"></i>
+                            {{ article.downloads_count }} downloads
+                        </small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% if article.keywords %}
+                <div class="mb-3">
+                    <small class="text-muted">Palavras-chave:</small>
+                    {% for keyword in article.keywords.split(',') %}
+                    <span class="badge bg-light text-dark me-1">{{ keyword.strip() }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Abstract -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>Resumo
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="lead">{{ article.abstract }}</p>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-book me-2"></i>Conteúdo Completo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="article-content">
+                    {{ article.content|replace('\n', '<br>')|safe }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if article.file_path %}
+                        <a href="{{ url_for('articles.download_article', article_id=article.id) }}" class="btn btn-success me-2">
+                            <i class="fas fa-download me-1"></i>Download PDF
+                        </a>
+                        {% endif %}
+                        <a href="{{ url_for('search') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>Buscar Mais Artigos
+                        </a>
+                    </div>
+                    <div>
+                        {% if session.user_id == article.user_id or session.user_role == 'admin' %}
+                        <a href="{{ url_for('articles.edit_article', article_id=article.id) }}" 
+                           class="btn btn-warning me-2">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <a href="{{ url_for('articles.delete_article', article_id=article.id) }}" 
+                           class="btn btn-danger"
+                           onclick="return confirm('Tem certeza que deseja deletar este artigo?')">
+                            <i class="fas fa-trash me-1"></i>Deletar
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Author Info -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Sobre o Autor
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle text-primary" style="font-size: 4rem;"></i>
+                </div>
+                <h6>{{ article.author.name }}</h6>
+                <small class="text-muted">{{ article.author.email }}</small>
+                <hr>
+                <small class="text-muted">
+                    Membro desde {{ article.author.created_at.strftime('%m/%Y') }}
+                </small>
+            </div>
+        </div>
+
+        <!-- Related Articles -->
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>Artigos Relacionados
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% if related_articles %}
+                        {% for related in related_articles %}
+                        <a href="{{ url_for('articles.view_article', article_id=related.id) }}" class="list-group-item list-group-item-action">
+                            <h6 class="mb-1">{{ related.title }}</h6>
+                            <small class="text-muted">Por {{ related.author.name }}</small>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <small class="text-muted">Nenhum artigo relacionado encontrado.</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
