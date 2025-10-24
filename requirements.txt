@@ -1,6 +1,3 @@
-# Blue Article - Biblioteca Digital de TCCs e Artigos Acadêmicos
-# Dependências Python necessárias para executar a aplicação Flask
-
 # Framework Web
 Flask==2.3.3
 Werkzeug==2.3.7
@@ -8,14 +5,12 @@ Werkzeug==2.3.7
 # Banco de Dados
 Flask-SQLAlchemy==3.0.5
 SQLAlchemy==2.0.21
-PyMySQL==1.1.0
 cryptography==41.0.4
 
 # Segurança
 Werkzeug==2.3.7
 
 # Utilitários
-python-dotenv==1.0.0
 click==8.1.7
 itsdangerous==2.1.2
 Jinja2==3.1.2
@@ -23,10 +18,6 @@ MarkupSafe==2.1.3
 
 # Desenvolvimento (opcional)
 Flask-DebugToolbar==0.13.1
-
-# Para produção (opcional)
-gunicorn==21.2.0
-waitress==2.1.2
 
 # Para upload de arquivos (opcional)
 Flask-uploads
@@ -38,8 +29,6 @@ Flask-WTF==1.1.1
 # Para emails (opcional)
 Flask-Mail==0.9.1
 
-# Para cache (opcional)
-Flask-Caching==2.1.0
 
 # Para migrações de banco (opcional)
 Flask-Migrate==4.0.5

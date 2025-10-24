@@ -135,7 +135,7 @@ class ArticleController:
             status='published'
         ).order_by(Article.created_at.desc()).all()
     
-    def create_article(self, title, abstract, content, category_id, keywords, user_id, file_path=None):
+    def create_article(self, title, abstract, content, category_id, keywords, user_id, file_path=None, cover_path=None):
         """Cria um novo artigo"""
         try:
             article = Article(
@@ -145,7 +145,8 @@ class ArticleController:
                 keywords=keywords,
                 category_id=category_id,
                 user_id=user_id,
-                file_path=file_path
+                file_path=file_path,
+                cover_path=cover_path # Adicionar cover_path
             )
             
             db.session.add(article)
@@ -157,7 +158,7 @@ class ArticleController:
             return False
     
     def update_article(self, article_id, title=None, abstract=None, content=None, 
-                      category_id=None, keywords=None, status=None, file_path=None):
+                      category_id=None, keywords=None, status=None, file_path=None, cover_path=None):
         """Atualiza um artigo"""
         try:
             article = self.get_article_by_id(article_id)
@@ -178,6 +179,8 @@ class ArticleController:
                 article.status = status
             if file_path:
                 article.file_path = file_path
+            if cover_path: # Adicionar atualização de cover_path
+                article.cover_path = cover_path
             
             article.updated_at = datetime.utcnow()
             db.session.commit()

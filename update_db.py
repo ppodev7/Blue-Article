@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-"""
-Script para atualizar a estrutura do banco de dados
-"""
-
 import sys
 import os
 
@@ -14,7 +9,8 @@ def update_database_schema():
     print("Atualizando estrutura do banco de dados...")
     
     try:
-        from app import app, db
+        from app import app, db # Importar apenas 'app' e 'db'
+        from src.controller.user_controller import UserController
         
         with app.app_context():
             # Dropar e recriar todas as tabelas
@@ -46,6 +42,19 @@ def update_database_schema():
             db.session.commit()
             print("Categorias padrão recriadas!")
             
+            # Criar usuário administrador padrão se não existir
+            admin_email_config = app.config['ADMIN_EMAIL'] # Acessar ADMIN_EMAIL via app.config
+            from src.model.models import User
+            user_controller = UserController()
+            
+            admin_user = User.query.filter_by(email=admin_email_config).first()
+            if not admin_user:
+                print(f"Criando usuário administrador: {admin_email_config} com senha '123456'...")
+                user_controller.create_user(
+                    name="Administrador", 
+                    email=admin_email_config, 
+                    password="123456", 
+                    admin_email=admin_email_config)
             print("Estrutura do banco atualizada com sucesso!")
             
     except Exception as e:

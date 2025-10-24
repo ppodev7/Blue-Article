@@ -1,21 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
+import csv
+from io import StringIO
 
 # Configuração da aplicação Flask
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'blue-article-secret-key-2024'
-
-# Configuração do banco de dados MySQL
-DB_HOST = "localhost"
-DB_USER = "root"
-DB_PASSWORD = ""
-DB_NAME = "blue_article"
-
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}'
+app.config['SECRET_KEY'] = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blue_article.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['ADMIN_EMAIL'] = 'admin@bluearticle.com'  # E-mail do administrador
 
 # Importar modelos primeiro
 from src.model.models import db, User, Article, Category
@@ -52,16 +50,33 @@ def view_article(article_id):
 @app.route('/search')
 def search():
     """Buscar artigos"""
-    query = request.args.get('q', '')
-    articles = article_controller.search_articles(query) if query else []
-    return render_template('search.html', articles=articles, query=query)
+    # Capturar todos os parâmetros da URL
+    query = request.args.get('q', '').strip()
+    category_id = request.args.get('category_id', type=int)
+    has_file = request.args.get('has_file') == '1'
+    sort = request.args.get('sort', 'newest')
+    date_from = request.args.get('date_from', '')
+    date_to = request.args.get('date_to', '')
+
+    # A lógica de busca agora pode usar todos os filtros
+    articles = article_controller.search_articles(query) # Nota: search_articles precisará ser atualizado para usar os novos filtros
+    
+    categories = Category.query.all()
+    
+    return render_template('search.html', 
+                           articles=articles, 
+                           query=query, 
+                           categories=categories,
+                           selected_category=category_id,
+                           has_file=has_file, sort=sort,
+                           date_from=date_from, date_to=date_to)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Página de login"""
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
+        email = request.form['email'].strip()
+        password = request.form['password'].strip()
         
         user = auth_controller.login(email, password)
         if user:
@@ -92,7 +107,7 @@ def register():
             return render_template('register.html')
         
         # Tentar criar o usuário
-        user = auth_controller.register(name, email, password)
+        user = auth_controller.register(name, email, password, admin_email=app.config['ADMIN_EMAIL'])
         if user:
             flash('Conta criada com sucesso! Faça login para continuar.', 'success')
             return redirect(url_for('login'))
@@ -131,6 +146,26 @@ def add_article():
         content = request.form['content']
         category_id = request.form['category_id']
         keywords = request.form['keywords']
+        pdf_file = request.files.get('file')
+        cover_file = request.files.get('cover')
+
+        pdf_path = None
+        if pdf_file and pdf_file.filename != '':
+            filename = secure_filename(pdf_file.filename)
+            relative_pdf_path = os.path.join('pdfs', filename)
+            pdf_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'pdfs') # Absolute path to save
+            os.makedirs(pdf_folder, exist_ok=True)
+            pdf_file.save(os.path.join(app.config['UPLOAD_FOLDER'], relative_pdf_path))
+            pdf_path = relative_pdf_path # Store relative path in DB
+
+        cover_path = None
+        if cover_file and cover_file.filename != '':
+            filename = secure_filename(cover_file.filename)
+            cover_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'covers')
+            os.makedirs(cover_folder, exist_ok=True)
+            # Salva o caminho relativo para ser usado no template
+            cover_path = os.path.join('covers', filename)
+            cover_file.save(os.path.join(app.config['UPLOAD_FOLDER'], cover_path))
         
         if article_controller.create_article(
             title=title,
@@ -138,7 +173,9 @@ def add_article():
             content=content,
             category_id=category_id,
             keywords=keywords,
-            user_id=session['user_id']
+            user_id=session['user_id'],
+            file_path=pdf_path,
+            cover_path=cover_path
         ):
             flash('Artigo adicionado com sucesso!', 'success')
             return redirect(url_for('dashboard'))
@@ -201,6 +238,58 @@ def delete_article(article_id):
         flash('Erro ao deletar artigo!', 'error')
     
     return redirect(url_for('dashboard'))
+
+@app.route('/download_article/<int:article_id>')
+def download_article(article_id):
+    """Fornece o download do PDF de um artigo"""
+    if 'user_id' not in session:
+        flash('Você precisa estar logado para baixar artigos.', 'warning')
+        return redirect(url_for('login'))
+
+    article = article_controller.get_article_by_id(article_id)
+    full_file_path = os.path.join(app.config['UPLOAD_FOLDER'], article.file_path) if article and article.file_path else None
+    if not full_file_path or not os.path.exists(full_file_path):
+        flash('Arquivo não encontrado ou indisponível.', 'error')
+        return redirect(url_for('view_article', article_id=article_id))
+
+    article.increment_download()
+    # Use UPLOAD_FOLDER as the base directory and file_path as the relative path
+    return send_from_directory(app.config['UPLOAD_FOLDER'], article.file_path, as_attachment=True)
+
+@app.route('/uploads/<path:filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/export_csv')
+def export_csv():
+    """Exportar resultados da busca para CSV"""
+    if 'user_id' not in session:
+        flash('Você precisa estar logado para exportar dados.', 'error')
+        return redirect(url_for('login'))
+
+    # Reutilizar a lógica de busca
+    query = request.args.get('q', '').strip()
+    # Adicione outros filtros se a busca for mais complexa
+    articles = article_controller.search_articles(query)
+
+    # Criar CSV em memória
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    # Cabeçalho do CSV
+    writer.writerow(['ID', 'Title', 'Author', 'Category', 'Keywords', 'Views', 'Downloads', 'Created At'])
+    
+    # Linhas do CSV
+    for article in articles:
+        writer.writerow([
+            article.id, article.title, article.author.name, article.category.name,
+            article.keywords, article.views_count, article.downloads_count,
+            article.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        ])
+    
+    output.seek(0)
+    
+    return output.getvalue(), 200, {'Content-Disposition': 'attachment; filename=articles.csv', 'Content-Type': 'text/csv'}
 
 # Criar tabelas do banco de dados
 def create_tables():

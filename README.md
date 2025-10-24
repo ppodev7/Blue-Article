@@ -16,7 +16,7 @@ Uma aplicação web Flask para gerenciar e compartilhar trabalhos de conclusão 
 ## 🛠️ Tecnologias Utilizadas
 
 - **Backend**: Python 3 + Flask
-- **Banco de Dados**: MySQL (XAMPP)
+- **Banco de Dados**: SQLite
 - **ORM**: SQLAlchemy
 - **Frontend**: HTML5 + CSS3 + JavaScript + Bootstrap 5
 - **Ícones**: Font Awesome 6
@@ -24,7 +24,6 @@ Uma aplicação web Flask para gerenciar e compartilhar trabalhos de conclusão 
 ## 📋 Pré-requisitos
 
 - Python 3.8 ou superior
-- MySQL (XAMPP recomendado)
 - Git
 
 ## 🔧 Instalação

@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Script de teste para verificar se a aplicação Blue Article está funcionando corretamente.
-Execute este script para testar a conexão com o banco de dados e a criação das tabelas.
-"""
-
 import sys
 import os
 
@@ -42,40 +36,15 @@ def test_database_connection():
     print("\nTestando conexao com banco de dados...")
     
     try:
-        import pymysql
-        print("OK - PyMySQL importado com sucesso")
-        
-        # Configurações do banco
-        DB_HOST = "localhost"
-        DB_USER = "root"
-        DB_PASSWORD = ""
-        DB_NAME = "blue_article"
-        
-        # Tentar conectar
-        connection = pymysql.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASSWORD,
-            database=DB_NAME
-        )
-        
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT VERSION()")
-            version = cursor.fetchone()
-            print(f"OK - Conectado ao MySQL {version[0]}")
-        
-        connection.close()
+        from app import app, db
+        with app.app_context():
+            # Com SQLite, o teste de conexão é efetivamente a capacidade de interagir com o db.
+            db.engine.connect()
+        print("OK - Conexão com o banco de dados (SQLite) bem-sucedida.")
         return True
-        
-    except ImportError:
-        print("ERRO - PyMySQL nao esta instalado. Execute: pip install PyMySQL")
-        return False
     except Exception as e:
         print(f"ERRO - Erro ao conectar com o banco: {e}")
-        print("Dica - Verifique se:")
-        print("   - O XAMPP esta rodando")
-        print("   - O MySQL esta ativo")
-        print("   - O banco 'blue_article' existe")
+        print("Dica: Verifique a string de conexão em app.py.")
         return False
 
 def test_app_creation():

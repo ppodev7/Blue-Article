@@ -13,6 +13,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')  # 'user' ou 'admin'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -33,6 +34,7 @@ class User(db.Model):
             'id': self.id,
             'name': self.name,
             'email': self.email,
+            'role': self.role,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'articles_count': len(self.articles)
         }
@@ -75,6 +77,7 @@ class Article(db.Model):
     content = db.Column(db.Text, nullable=False)
     keywords = db.Column(db.Text)  # Palavras-chave separadas por vírgula
     file_path = db.Column(db.String(500))  # Caminho para arquivo PDF (opcional)
+    cover_path = db.Column(db.String(500)) # Caminho para a imagem de capa (opcional)
     status = db.Column(db.String(20), default='published')  # published, draft, review
     views_count = db.Column(db.Integer, default=0)
     downloads_count = db.Column(db.Integer, default=0)
@@ -114,6 +117,7 @@ class Article(db.Model):
             'content': self.content,
             'keywords': self.get_keywords_list(),
             'file_path': self.file_path,
+            'cover_path': self.cover_path,
             'status': self.status,
             'views_count': self.views_count,
             'downloads_count': self.downloads_count,
