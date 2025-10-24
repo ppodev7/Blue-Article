@@ -16,7 +16,7 @@ class AuthController:
     def register(self, name, email, password, admin_email=None):
         """Registra novo usuário"""
         user_controller = UserController()
-        return user_controller.create_user(name, email, password, admin_email=admin_email)
+        return user_controller.create_user(name, email, password, admin_email)
     
     def change_password(self, user_id, old_password, new_password):
         """Altera senha do usuário"""

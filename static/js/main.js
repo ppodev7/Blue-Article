@@ -125,24 +125,6 @@ function createToastContainer() {
     return container;
 }
 
-// Share functions
-function shareOnFacebook() {
-    var url = window.location.href;
-    var title = document.title;
-    window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url) + '&quote=' + encodeURIComponent(title), '_blank', 'width=600,height=400');
-}
-
-function shareOnTwitter() {
-    var url = window.location.href;
-    var title = document.title;
-    window.open('https://twitter.com/intent/tweet?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(title), '_blank', 'width=600,height=400');
-}
-
-function shareOnLinkedIn() {
-    var url = window.location.href;
-    window.open('https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(url), '_blank', 'width=600,height=400');
-}
-
 // Download tracking
 function trackDownload(articleId) {
     fetch('/api/track-download/' + articleId, {

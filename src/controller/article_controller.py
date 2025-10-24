@@ -13,7 +13,7 @@ class UserController:
         """Busca usuário por email"""
         return User.query.filter_by(email=email).first()
     
-    def create_user(self, name, email, password):
+    def create_user(self, name, email, password, admin_email=None):
         """Cria um novo usuário"""
         try:
             # Validações básicas
@@ -36,6 +36,10 @@ class UserController:
                 email=email
             )
             user.set_password(password)
+
+            # Define o papel do usuário durante a criação
+            if email == admin_email:
+                user.role = 'admin'
             
             db.session.add(user)
             db.session.commit()
@@ -83,6 +87,20 @@ class UserController:
             print(f"Erro ao deletar usuário: {e}")
             return False
     
+    def set_user_role(self, user_id, role):
+        """Define o papel de um usuário (ex: 'admin', 'author')"""
+        try:
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return False
+            user.role = role
+            db.session.commit()
+            return True
+        except Exception as e:
+            db.session.rollback()
+            print(f"Erro ao definir o papel do usuário: {e}")
+            return False
+
     def get_all_users(self):
         """Retorna todos os usuários"""
         return User.query.all()
@@ -128,12 +146,19 @@ class ArticleController:
             )
         ).order_by(Article.created_at.desc()).all()
     
-    def get_articles_by_category(self, category_id):
+    def get_articles_by_category(self, category_id, exclude_id=None, limit=None):
         """Retorna artigos de uma categoria específica"""
-        return Article.query.filter_by(
+        query = Article.query.filter_by(
             category_id=category_id,
             status='published'
-        ).order_by(Article.created_at.desc()).all()
+        )
+        if exclude_id:
+            query = query.filter(Article.id != exclude_id)
+        
+        query = query.order_by(Article.created_at.desc())
+        if limit:
+            query = query.limit(limit)
+        return query.all()
     
     def create_article(self, title, abstract, content, category_id, keywords, user_id, file_path=None, cover_path=None):
         """Cria um novo artigo"""
@@ -247,10 +272,10 @@ class AuthController:
             return user
         return None
     
-    def register(self, name, email, password):
+    def register(self, name, email, password, admin_email=None):
         """Registra novo usuário"""
         user_controller = UserController()
-        return user_controller.create_user(name, email, password)
+        return user_controller.create_user(name, email, password, admin_email=admin_email)
     
     def change_password(self, user_id, old_password, new_password):
         """Altera senha do usuário"""

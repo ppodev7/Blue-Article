@@ -3,8 +3,18 @@
 {% block title %}{{ article.title }} - Blue Article{% endblock %}
 
 {% block content %}
-<div class="row">
+<div class="row" data-article-id="{{ article.id }}"> {# Adicionado data-article-id para rastreamento de visualizações #}
     <div class="col-lg-8">
+        <!-- Article Cover Image -->
+        {% if article.cover_path %}
+        <div class="card shadow mb-4">
+            <img src="{{ url_for('uploaded_file', filename=article.cover_path) }}" 
+                 class="card-img-top" 
+                 alt="Imagem de capa do artigo: {{ article.title }}"
+                 style="max-height: 400px; object-fit: cover;">
+        </div>
+        {% endif %}
+
         <!-- Article Header -->
         <div class="card shadow mb-4">
             <div class="card-body">
@@ -80,7 +90,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         {% if article.file_path %}
-                        <a href="{{ url_for('download_article', article_id=article.id) }}" class="btn btn-success me-2">
+                        <a href="{{ url_for('articles.download_article', article_id=article.id) }}" class="btn btn-success me-2">
                             <i class="fas fa-download me-1"></i>Download PDF
                         </a>
                         {% endif %}
@@ -89,12 +99,12 @@
                         </a>
                     </div>
                     <div>
-                        {% if session.user_id == article.user_id %}
-                        <a href="{{ url_for('edit_article', article_id=article.id) }}" 
+                        {% if session.user_id == article.user_id or session.user_role == 'admin' %}
+                        <a href="{{ url_for('articles.edit_article', article_id=article.id) }}" 
                            class="btn btn-warning me-2">
                             <i class="fas fa-edit me-1"></i>Editar
                         </a>
-                        <a href="{{ url_for('delete_article', article_id=article.id) }}" 
+                        <a href="{{ url_for('articles.delete_article', article_id=article.id) }}" 
                            class="btn btn-danger"
                            onclick="return confirm('Tem certeza que deseja deletar este artigo?')">
                             <i class="fas fa-trash me-1"></i>Deletar
@@ -137,55 +147,21 @@
             </div>
             <div class="card-body">
                 <div class="list-group list-group-flush">
-                    <!-- Aqui você pode adicionar artigos relacionados da mesma categoria -->
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <h6 class="mb-1">Título do Artigo Relacionado</h6>
-                        <small class="text-muted">Por Autor</small>
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <h6 class="mb-1">Outro Artigo Relacionado</h6>
-                        <small class="text-muted">Por Outro Autor</small>
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Share -->
-        <div class="card shadow">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-share-alt me-2"></i>Compartilhar
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <button class="btn btn-primary" onclick="shareOnFacebook()">
-                        <i class="fab fa-facebook me-2"></i>Facebook
-                    </button>
-                    <button class="btn btn-info" onclick="shareOnTwitter()">
-                        <i class="fab fa-twitter me-2"></i>Twitter
-                    </button>
-                    <button class="btn btn-success" onclick="shareOnLinkedIn()">
-                        <i class="fab fa-linkedin me-2"></i>LinkedIn
-                    </button>
+                    {% if related_articles %}
+                        {% for related in related_articles %}
+                        <a href="{{ url_for('articles.view_article', article_id=related.id) }}" class="list-group-item list-group-item-action">
+                            <h6 class="mb-1">{{ related.title }}</h6>
+                            <small class="text-muted">Por {{ related.author.name }}</small>
+                        </a>
+                        {% endfor %}
+                    {% else %}
+                        <div class="list-group-item">
+                            <small class="text-muted">Nenhum artigo relacionado encontrado.</small>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-function incrementDownload(articleId) {
-    // Aqui você pode implementar a lógica para incrementar downloads
-    console.log('Download do artigo:', articleId);
-}
-
-// Incrementar visualizações quando a página carrega
-document.addEventListener('DOMContentLoaded', function() {
-    // Aqui você pode implementar a lógica para incrementar visualizações
-    console.log('Visualização do artigo:', {{ article.id }});
-});
-</script>
 {% endblock %}
