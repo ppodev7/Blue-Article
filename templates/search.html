@@ -57,11 +57,6 @@
                                 <i class="fas fa-search me-2"></i>Buscar
                             </button>
                         </div>
-                        <div class="col-lg-3 d-grid">
-                            <a class="btn btn-outline-secondary" href="{{ url_for('export_csv', q=query, category_id=selected_category, has_file='1' if has_file else '0', date_from=date_from, date_to=date_to, sort=sort) }}">
-                                <i class="fas fa-file-csv me-2"></i>Exportar CSV
-                            </a>
-                        </div>
                     </div>
                 </form>
             </div>

@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, send_from_directory
 from werkzeug.utils import secure_filename
 import os
+import io # ADICIONADO VICTOR
+import csv # ADICIONADO VICTOR
+from flask import Response # ADICIONADO VICTOR
 
 from src.controller.article_controller import ArticleController
 from src.model.models import Category
@@ -173,3 +176,47 @@ def download_article(article_id):
 
     article.increment_download()
     return send_from_directory(directory, filename, as_attachment=True)
+
+@articles_bp.route('/export_csv/<int:article_id>') # ADICIONADO VICTOR
+def export_article_csv(article_id):
+    """Exporta os metadados de um artigo específico para CSV"""
+    if 'user_id' not in session:
+        flash('Você precisa estar logado para exportar dados.', 'warning')
+        return redirect(url_for('auth.login'))
+
+    article = article_controller.get_article_by_id(article_id)
+    if not article:
+        flash('Artigo não encontrado!', 'error')
+        return redirect(url_for('index')) # Ou dashboard
+
+    # Cria o CSV em memória
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Cabeçalho
+    writer.writerow(['ID', 'Title', 'Abstract', 'Author_ID', 'Category_ID', 'Keywords', 'Creation_Date', 'Download_Count'])
+    
+    # Dados
+    creation_date_str = article.created_at.strftime('%Y-%m-%d %H:%M:%S') if article.created_at else 'N/A'
+    
+    # Forma segura de acessar o download_count
+    download_count = getattr(article, 'download_count', 0)
+
+    writer.writerow([
+        article.id,
+        article.title,
+        article.abstract,
+        article.user_id,
+        article.category_id,
+        article.keywords,
+        creation_date_str, 
+        download_count
+    ])
+
+    # Prepara a resposta
+    output.seek(0)
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment;filename=article_{article.id}.csv"}
+    )
