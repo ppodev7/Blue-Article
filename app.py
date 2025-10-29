@@ -166,7 +166,7 @@ def create_tables():
             auth_controller.register('Autor Exemplo', 'autor@exemplo.com', 'autor123', admin_email=admin_email)
             # Leitor
             auth_controller.register('Leitor Exemplo', 'leitor@exemplo.com', 'leitor123', admin_email=admin_email)
-
+        
 # Adicionar o app.config ao ambiente para que os blueprints possam acessá-lo
 @app.before_request
 def before_request_func():

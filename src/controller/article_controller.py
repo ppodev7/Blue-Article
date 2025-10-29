@@ -160,7 +160,7 @@ class ArticleController:
             query = query.limit(limit)
         return query.all()
     
-    def create_article(self, title, abstract, content, category_id, keywords, user_id, file_path=None, cover_path=None):
+    def create_article(self, title, abstract, content, category_id, keywords, user_id, file_path=None, cover_path=None, status='draft'):
         """Cria um novo artigo"""
         try:
             article = Article(
@@ -171,7 +171,8 @@ class ArticleController:
                 category_id=category_id,
                 user_id=user_id,
                 file_path=file_path,
-                cover_path=cover_path # Adicionar cover_path
+                cover_path=cover_path,
+                status=status
             )
             
             db.session.add(article)
@@ -202,10 +203,9 @@ class ArticleController:
                 article.keywords = keywords
             if status:
                 article.status = status
-            if file_path:
-                article.file_path = file_path
-            if cover_path: # Adicionar atualização de cover_path
-                article.cover_path = cover_path
+            # Permite definir o caminho como None para remover o arquivo/capa
+            article.file_path = file_path
+            article.cover_path = cover_path
             
             article.updated_at = datetime.utcnow()
             db.session.commit()
