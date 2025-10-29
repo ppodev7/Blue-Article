@@ -90,7 +90,7 @@
                         <input type="file" class="form-control" id="cover" name="cover" accept="image/*">
                         <!-- Image Preview -->
                         <img id="cover-preview" 
-                             src="{{ url_for('uploaded_file', filename=article.cover_path) if article.cover_path else '#' }}" 
+                             src="{{ url_for('uploaded_cover', filename=article.cover_path.split('/')[-1].split('\\')[-1]) if article.cover_path else '#' }}" 
                              alt="Pré-visualização da capa" 
                              class="img-fluid rounded mt-3" 
                              style="max-height: 300px; {{ 'display: block;' if article.cover_path else 'display: none;' }}"

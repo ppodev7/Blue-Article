@@ -8,7 +8,7 @@
         <!-- Article Cover Image -->
         {% if article.cover_path %}
         <div class="card shadow mb-4">
-            <img src="{{ url_for('uploaded_file', filename=article.cover_path) }}" 
+            <img src="{{ url_for('uploaded_cover', filename=article.cover_path.split('/')[-1].split('\\')[-1]) }}" 
                  class="card-img-top" 
                  alt="Imagem de capa do artigo: {{ article.title }}"
                  style="max-height: 400px; object-fit: cover;">

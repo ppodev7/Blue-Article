@@ -94,9 +94,15 @@ def track_view(article_id):
         return jsonify({'message': 'Failed to track view or article not found'}), 404
 
 
-@app.route('/uploads/<path:filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/uploads/covers/<path:filename>')
+def uploaded_cover(filename):
+    """Serve as imagens de capa."""
+    return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], 'covers'), filename)
+
+@app.route('/uploads/pdfs/<path:filename>')
+def uploaded_pdf(filename):
+    """Serve os arquivos PDF."""
+    return send_from_directory(os.path.join(app.config['UPLOAD_FOLDER'], 'pdfs'), filename)
 
 @app.route('/export_csv')
 def export_csv():
