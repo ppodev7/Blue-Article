@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Blue Article{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+    </h2>
+    <a href="{{ url_for('articles.add_article') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Adicionar Artigo
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-file-alt text-primary" style="font-size: 2.5rem;"></i>
+                <h4 class="mt-2">{{ articles|length }}</h4>
+                <p class="text-muted mb-0">Meus Artigos</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-eye text-success" style="font-size: 2.5rem;"></i>
+                <h4 class="mt-2">{{ articles|sum(attribute='views_count') }}</h4>
+                <p class="text-muted mb-0">Total de Visualizações</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-download text-info" style="font-size: 2.5rem;"></i>
+                <h4 class="mt-2">{{ articles|sum(attribute='downloads_count') }}</h4>
+                <p class="text-muted mb-0">Total de Downloads</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calendar text-warning" style="font-size: 2.5rem;"></i>
+                <h4 class="mt-2">{{ articles|length }}</h4>
+                <p class="text-muted mb-0">Artigos Este Mês</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Articles -->
+<div class="card shadow">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>Meus Artigos
+        </h5>
+        <span class="badge bg-primary">{{ articles|length }} artigos</span>
+    </div>
+    <div class="card-body">
+        {% if articles %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Título</th>
+                            <th>Categoria</th>
+                            <th>Status</th>
+                            <th>Visualizações</th>
+                            <th>Downloads</th>
+                            <th>Data</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for article in articles %}
+                        <tr>
+                            <td> 
+                                <a href="{{ url_for('articles.view_article', article_id=article.id) }}" 
+                                   class="text-decoration-none">
+                                    {{ article.title }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ article.category.name }}</span>
+                            </td>
+                            <td>
+                                {% if article.status == 'published' %}
+                                    <span class="badge bg-success">Publicado</span>
+                                {% elif article.status == 'draft' %}
+                                    <span class="badge bg-warning">Rascunho</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ article.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <i class="fas fa-eye text-muted me-1"></i>
+                                {{ article.views_count }}
+                            </td>
+                            <td>
+                                <i class="fas fa-download text-muted me-1"></i>
+                                {{ article.downloads_count }}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {{ article.created_at.strftime('%d/%m/%Y') }}
+                                </small>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{{ url_for('articles.view_article', article_id=article.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if article.file_path %}
+                                    <a href="{{ url_for('articles.download_article', article_id=article.id) }}" 
+                                       class="btn btn-outline-success" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{{ url_for('articles.edit_article', article_id=article.id) }}" 
+                                       class="btn btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('articles.delete_article', article_id=article.id) }}" 
+                                       class="btn btn-outline-danger" title="Deletar"
+                                       onclick="return confirm('Tem certeza que deseja deletar este artigo?')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-alt text-muted" style="font-size: 4rem;"></i>
+                <h4 class="text-muted mt-3">Nenhum artigo encontrado</h4>
+                <p class="text-muted">Você ainda não publicou nenhum artigo.</p>
+                <a href="{{ url_for('articles.add_article') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Adicionar Primeiro Artigo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
