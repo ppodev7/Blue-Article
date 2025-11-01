@@ -4,9 +4,17 @@ import os
 import io # ADICIONADO VICTOR
 import csv # ADICIONADO VICTOR
 from flask import Response # ADICIONADO VICTOR
+import unicodedata
 
 from src.controller.article_controller import ArticleController
 from src.model.models import Category
+
+def remover_acentos(texto):
+    """Remove acentos de uma string"""
+    if not texto:
+        return texto
+    nfkd = unicodedata.normalize('NFKD', texto)
+    return ''.join([char for char in nfkd if not unicodedata.combining(char)])
 
 # Cria o Blueprint para as rotas de artigos
 articles_bp = Blueprint('articles', __name__, template_folder='../../templates')
@@ -189,34 +197,54 @@ def export_article_csv(article_id):
         flash('Artigo não encontrado!', 'error')
         return redirect(url_for('index')) # Ou dashboard
 
-    # Cria o CSV em memória
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Cabeçalho
-    writer.writerow(['ID', 'Title', 'Abstract', 'Author_ID', 'Category_ID', 'Keywords', 'Creation_Date', 'Download_Count'])
+    writer.writerow(['Campo', 'Valor'])
+    writer.writerow([])
     
-    # Dados
-    creation_date_str = article.created_at.strftime('%Y-%m-%d %H:%M:%S') if article.created_at else 'N/A'
+    writer.writerow(['INFORMACOES BASICAS', ''])
+    writer.writerow(['ID do Artigo', article.id])
+    writer.writerow(['Titulo', remover_acentos(article.title)])
+    writer.writerow(['Status', article.status.capitalize()])
+    writer.writerow([])
     
-    # Forma segura de acessar o download_count
-    download_count = getattr(article, 'download_count', 0)
-
-    writer.writerow([
-        article.id,
-        article.title,
-        article.abstract,
-        article.user_id,
-        article.category_id,
-        article.keywords,
-        creation_date_str, 
-        download_count
-    ])
+    writer.writerow(['AUTORIA', ''])
+    writer.writerow(['Nome do Autor', remover_acentos(article.author.name) if article.author else 'N/A'])
+    writer.writerow(['Email do Autor', article.author.email if article.author else 'N/A'])
+    writer.writerow(['ID do Autor', article.user_id])
+    writer.writerow([])
+    
+    writer.writerow(['CATEGORIA', ''])
+    writer.writerow(['Nome da Categoria', remover_acentos(article.category.name) if article.category else 'N/A'])
+    writer.writerow(['ID da Categoria', article.category_id])
+    writer.writerow([])
+    
+    writer.writerow(['CONTEUDO', ''])
+    writer.writerow(['Resumo', remover_acentos(article.abstract)])
+    writer.writerow(['Palavras-chave', remover_acentos(article.keywords) if article.keywords else 'N/A'])
+    writer.writerow([])
+    
+    writer.writerow(['ARQUIVOS', ''])
+    writer.writerow(['PDF Disponivel', 'Sim' if article.file_path else 'Nao'])
+    writer.writerow(['Caminho do PDF', article.file_path if article.file_path else 'N/A'])
+    writer.writerow(['Imagem de Capa Disponivel', 'Sim' if article.cover_path else 'Nao'])
+    writer.writerow(['Caminho da Capa', article.cover_path if article.cover_path else 'N/A'])
+    writer.writerow([])
+    
+    writer.writerow(['ESTATISTICAS', ''])
+    writer.writerow(['Visualizacoes', article.views_count])
+    writer.writerow(['Downloads', article.downloads_count])
+    writer.writerow([])
+    
+    writer.writerow(['DATAS', ''])
+    writer.writerow(['Data de Criacao', article.created_at.strftime('%d/%m/%Y %H:%M:%S') if article.created_at else 'N/A'])
+    writer.writerow(['Data de Atualizacao', article.updated_at.strftime('%d/%m/%Y %H:%M:%S') if article.updated_at else 'N/A'])
 
     # Prepara a resposta
     output.seek(0)
     return Response(
         output,
         mimetype="text/csv",
-        headers={"Content-Disposition": f"attachment;filename=article_{article.id}.csv"}
+        headers={"Content-Disposition": f"attachment;filename=metadados_artigo_{article.id}_{article.title[:20].replace(' ', '_')}.csv"}
     )

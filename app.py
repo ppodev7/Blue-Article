@@ -6,6 +6,14 @@ from datetime import datetime
 import os
 import csv
 from io import StringIO
+import unicodedata
+
+def remover_acentos(texto):
+    """Remove acentos de uma string"""
+    if not texto:
+        return texto
+    nfkd = unicodedata.normalize('NFKD', texto)
+    return ''.join([char for char in nfkd if not unicodedata.combining(char)])
 
 # Configuração da aplicação Flask
 app = Flask(__name__)
@@ -111,29 +119,41 @@ def export_csv():
         flash('Você precisa estar logado para exportar dados.', 'error')
         return redirect(url_for('auth.login'))
 
-    # Reutilizar a lógica de busca
     query = request.args.get('q', '').strip()
-    # Adicione outros filtros se a busca for mais complexa
     articles = article_controller.search_articles(query)
 
-    # Criar CSV em memória
     output = StringIO()
     writer = csv.writer(output)
     
-    # Cabeçalho do CSV
-    writer.writerow(['ID', 'Title', 'Author', 'Category', 'Keywords', 'Views', 'Downloads', 'Created At'])
+    writer.writerow([
+        'ID', 'Titulo', 'Autor', 'Email do Autor', 'Categoria', 
+        'Palavras-chave', 'Visualizacoes', 'Downloads', 
+        'PDF Disponivel', 'Capa Disponivel', 'Status',
+        'Data de Criacao', 'Data de Atualizacao'
+    ])
     
-    # Linhas do CSV
     for article in articles:
         writer.writerow([
-            article.id, article.title, article.author.name, article.category.name,
-            article.keywords, article.views_count, article.downloads_count,
-            article.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            article.id, 
+            remover_acentos(article.title), 
+            remover_acentos(article.author.name) if article.author else 'N/A',
+            article.author.email if article.author else 'N/A',
+            remover_acentos(article.category.name) if article.category else 'N/A',
+            remover_acentos(article.keywords) if article.keywords else 'N/A',
+            article.views_count,
+            article.downloads_count,
+            'Sim' if article.file_path else 'Nao',
+            'Sim' if article.cover_path else 'Nao',
+            article.status.capitalize(),
+            article.created_at.strftime('%d/%m/%Y %H:%M:%S') if article.created_at else 'N/A',
+            article.updated_at.strftime('%d/%m/%Y %H:%M:%S') if article.updated_at else 'N/A'
         ])
     
     output.seek(0)
     
-    return output.getvalue(), 200, {'Content-Disposition': 'attachment; filename=articles.csv', 'Content-Type': 'text/csv'}
+    filename = f'busca_artigos_{query[:20].replace(" ", "_") if query else "geral"}.csv'
+    
+    return output.getvalue(), 200, {'Content-Disposition': f'attachment; filename={filename}', 'Content-Type': 'text/csv'}
 
 # Criar tabelas do banco de dados
 def create_tables():
