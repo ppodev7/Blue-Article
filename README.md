@@ -1,32 +1,18 @@
 # 📚 Blue Article - Biblioteca Digital de TCCs e Artigos Acadêmicos
 
-Uma aplicação web Flask para gerenciar e compartilhar trabalhos de conclusão de curso e artigos acadêmicos.
+Este é um projeto de faculdade que implementa uma aplicação web em Flask para gerenciar e compartilhar trabalhos de conclusão de curso e artigos acadêmicos.
 
-## 🚀 Características
+## ️ Tecnologias Utilizadas
 
-- **Interface moderna** com Bootstrap 5
-- **Sistema de autenticação** completo
-- **Gerenciamento de artigos** (CRUD)
-- **Sistema de categorias** para organização
-- **Busca avançada** por título, resumo e palavras-chave
-- **Dashboard personalizado** para usuários
-- **Contadores de visualizações** e downloads
-- **Design responsivo** para todos os dispositivos
+O projeto foi construído com as seguintes tecnologias principais, conforme o arquivo `requirements.txt`:
 
-## 🛠️ Tecnologias Utilizadas
+- **Backend**: Python
+- **Framework**: Flask
+- **Banco de Dados**: SQLAlchemy com SQLite
+- **Segurança**: Werkzeug para hashing de senhas
+- **Processamento de Imagens**: Pillow
 
-- **Backend**: Python 3 + Flask
-- **Banco de Dados**: SQLite
-- **ORM**: SQLAlchemy
-- **Frontend**: HTML5 + CSS3 + JavaScript + Bootstrap 5
-- **Ícones**: Font Awesome 6
-
-## 📋 Pré-requisitos
-
-- Python 3.8 ou superior
-- Git
-
-## 🔧 Instalação
+## 🚀 Como Executar o Projeto
 
 ### 1. Clone o repositório
 ```bash
@@ -55,14 +41,6 @@ source venv/bin/activate
 ```bash
 pip install -r requirements.txt
 ```
-
-### 5. Configure o banco de dados
-
-1. Inicie o XAMPP e ative o MySQL
-2. Acesse o phpMyAdmin (http://localhost/phpmyadmin)
-3. Crie um banco de dados chamado `blue_article`
-4. A aplicação criará as tabelas automaticamente na primeira execução
-
 ### 6. Execute a aplicação
 ```bash
 python app.py
